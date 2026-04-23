@@ -6,83 +6,103 @@ import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-// DataStore instance
-val Context.dataStore by preferencesDataStore(name = "user_prefs")
+private val Context.dataStore by preferencesDataStore(name = "dailyhub_prefs")
 
 class UserPreferences(private val context: Context) {
 
-    companion object {
+    // =========================
+    // 🔑 KEYS
+    // =========================
+    private val nameKey = stringPreferencesKey("user_name")
+    private val professionKey = stringPreferencesKey("user_profession")
+    private val imageKey = stringPreferencesKey("user_image")
 
-        // 🔐 Login
-        val IS_LOGGED_IN = booleanPreferencesKey("is_logged_in")
+    private val expensesKey = stringPreferencesKey("expenses")
+    private val loansKey = stringPreferencesKey("loans")
+    private val marketKey = stringPreferencesKey("market")
 
-        // 👤 User info (optional, future use)
-        val NAME = stringPreferencesKey("name")
-        val PROFESSION = stringPreferencesKey("profession")
+    // =========================
+    // 👤 USER
+    // =========================
+    val userFlow: Flow<Pair<String, String>> =
+        context.dataStore.data.map {
+            Pair(
+                it[nameKey] ?: "",
+                it[professionKey] ?: ""
+            )
+        }
 
-        // 📊 App data
-        val EXPENSES = stringPreferencesKey("expenses")
-        val LOANS = stringPreferencesKey("loans")
-        val MARKET = stringPreferencesKey("market")
-    }
+    val isLoggedInFlow: Flow<Boolean> =
+        context.dataStore.data.map {
+            !it[nameKey].isNullOrEmpty()
+        }
 
-    // ✅ Save login + basic user data
-    suspend fun saveUser(name: String, profession: String, imageUri: String?) {
-        context.dataStore.edit { prefs ->
-            prefs[IS_LOGGED_IN] = true
-            prefs[NAME] = name
-            prefs[PROFESSION] = profession
+    val imageFlow: Flow<String> =
+        context.dataStore.data.map {
+            it[imageKey] ?: ""
+        }
+
+    suspend fun saveUser(name: String, profession: String) {
+        context.dataStore.edit {
+            it[nameKey] = name
+            it[professionKey] = profession
         }
     }
 
-    // ✅ Check login status
-    val isLoggedIn: Flow<Boolean> = context.dataStore.data.map { prefs ->
-        prefs[IS_LOGGED_IN] ?: false
-    }
-
-    // ✅ Logout (clear everything)
-    suspend fun clearUser() {
-        context.dataStore.edit { prefs ->
-            prefs.clear()
+    suspend fun saveImage(uri: String) {
+        context.dataStore.edit {
+            it[imageKey] = uri
         }
     }
 
-    // ==========================
-    // 📊 EXPENSES
-    // ==========================
+    // =========================
+    // 💸 EXPENSES
+    // =========================
+    val expensesFlow: Flow<String> =
+        context.dataStore.data.map {
+            it[expensesKey] ?: ""
+        }
+
     suspend fun saveExpenses(data: String) {
-        context.dataStore.edit { prefs ->
-            prefs[EXPENSES] = data
+        context.dataStore.edit {
+            it[expensesKey] = data
         }
     }
 
-    val expensesFlow: Flow<String> = context.dataStore.data.map { prefs ->
-        prefs[EXPENSES] ?: ""
-    }
-
-    // ==========================
+    // =========================
     // 💰 LOANS
-    // ==========================
+    // =========================
+    val loansFlow: Flow<String> =
+        context.dataStore.data.map {
+            it[loansKey] ?: ""
+        }
+
     suspend fun saveLoans(data: String) {
-        context.dataStore.edit { prefs ->
-            prefs[LOANS] = data
+        context.dataStore.edit {
+            it[loansKey] = data
         }
     }
 
-    val loansFlow: Flow<String> = context.dataStore.data.map { prefs ->
-        prefs[LOANS] ?: ""
-    }
+    // =========================
+    // 🛒 MARKET
+    // =========================
+    val marketFlow: Flow<String> =
+        context.dataStore.data.map {
+            it[marketKey] ?: ""
+        }
 
-    // ==========================
-    // 🛒 MARKETPLACE
-    // ==========================
     suspend fun saveMarket(data: String) {
-        context.dataStore.edit { prefs ->
-            prefs[MARKET] = data
+        context.dataStore.edit {
+            it[marketKey] = data
         }
     }
 
-    val marketFlow: Flow<String> = context.dataStore.data.map { prefs ->
-        prefs[MARKET] ?: ""
+    // =========================
+    // 🚪 LOGOUT
+    // =========================
+    suspend fun clearUser() {
+        context.dataStore.edit {
+            it.clear()
+        }
     }
 }

@@ -3,70 +3,62 @@ package com.example.dailyhub.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
+import androidx.compose.ui.*
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.dailyhub.components.AppBackground
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(navController: NavController) {
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Settings") },
-                navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
-    ) { innerPadding ->
+    AppBackground {
 
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp)
-        ) {
-
-            // Profile
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-                    .clickable {
-                        navController.navigate("profile")
-                    }
-            ) {
-                Row(Modifier.padding(16.dp)) {
-                    Icon(Icons.Default.Person, contentDescription = null)
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text("Profile")
-                }
+        Scaffold(
+            containerColor = androidx.compose.ui.graphics.Color.Transparent,
+            topBar = {
+                TopAppBar(title = { Text("Settings") })
             }
+        ) { pad ->
 
-            // About
-            Card(
+            Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-                    .clickable {
-                        navController.navigate("about")
-                    }
+                    .padding(pad)
+                    .padding(16.dp)
             ) {
-                Row(Modifier.padding(16.dp)) {
-                    Icon(Icons.Default.Info, contentDescription = null)
-                    Spacer(modifier = Modifier.width(10.dp))
-                    Text("About")
+
+                SettingItem("Notifications", Icons.Default.Notifications)
+                SettingItem("Help", Icons.Default.Help)
+                SettingItem("Reminder", Icons.Default.Alarm)
+
+                SettingItem("About", Icons.Default.Info) {
+                    navController.navigate("about")
                 }
+
+                SettingItem("Logout", Icons.Default.ExitToApp)
             }
         }
+    }
+}
+
+@Composable
+fun SettingItem(
+    title: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit = {}
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() }
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, null)
+        Spacer(Modifier.width(16.dp))
+        Text(title)
     }
 }

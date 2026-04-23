@@ -1,5 +1,6 @@
 package com.example.dailyhub.ui
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,12 +11,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.dailyhub.data.UserPreferences
-import com.example.dailyhub.ui.components.*
+import com.example.dailyhub.components.*
 import kotlinx.coroutines.launch
 
 // ✅ Data class
 data class Loan(val person: String, val amount: Int)
 
+@SuppressLint("CoroutineCreationDuringComposition")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoanScreen(navController: NavController) {
@@ -30,84 +32,90 @@ fun LoanScreen(navController: NavController) {
 
     val saved by prefs.loansFlow.collectAsState(initial = "")
 
-    // 🔄 Load saved data
+    // 🔄 Load data
     LaunchedEffect(saved) {
         if (saved.isNotEmpty()) {
             list = saved.split(",").mapNotNull {
                 val p = it.split(":")
-                if (p.size == 2) Loan(p[0], p[1].toInt()) else null
+                if (p.size == 2 && p[1].toIntOrNull() != null) {
+                    Loan(p[0], p[1].toInt())
+                } else null
             }
         }
     }
 
-    Scaffold { pad ->
-        Column(
-            modifier = Modifier
-                .padding(pad)
-                .padding(16.dp)
-        ) {
+    AppBackground {
 
-            // 🎨 Header
-            GradientHeader("Loans 💰")
+        Scaffold(
+            containerColor = androidx.compose.ui.graphics.Color.Transparent
+        ) { pad ->
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Column(
+                modifier = Modifier
+                    .padding(pad)
+                    .padding(16.dp)
+            ) {
 
-            // 📦 Input Card
-            AppCard {
+                GradientHeader("Loans 💰")
 
-                OutlinedTextField(
-                    value = person,
-                    onValueChange = { person = it },
-                    label = { Text("Person Name") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Spacer(Modifier.height(16.dp))
 
-                Spacer(modifier = Modifier.height(10.dp))
+                AppCard {
 
-                OutlinedTextField(
-                    value = amount,
-                    onValueChange = { amount = it },
-                    label = { Text("Amount") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                    OutlinedTextField(
+                        value = person,
+                        onValueChange = { person = it },
+                        label = { Text("Person Name") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(Modifier.height(10.dp))
 
-                FullButton("Add Loan") {
-                    if (person.isNotEmpty() && amount.isNotEmpty()) {
+                    OutlinedTextField(
+                        value = amount,
+                        onValueChange = { amount = it },
+                        label = { Text("Amount") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-                        val new = list + Loan(person, amount.toInt())
-                        list = new
+                    Spacer(Modifier.height(12.dp))
 
-                        val str = new.joinToString(",") {
-                            "${it.person}:${it.amount}"
+                    FullButton("Add Loan") {
+
+                        val amt = amount.toIntOrNull()
+
+                        if (person.isNotEmpty() && amt != null) {
+
+                            val new = list + Loan(person, amt)
+                            list = new
+
+                            val str = new.joinToString(",") {
+                                "${it.person}:${it.amount}"
+                            }
+
+                            scope.launch {
+                                prefs.saveLoans(str)
+                            }
+
+                            person = ""
+                            amount = ""
                         }
-
-                        scope.launch {
-                            prefs.saveLoans(str)
-                        }
-
-                        person = ""
-                        amount = ""
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(10.dp))
+                Spacer(Modifier.height(10.dp))
 
-            // 📋 Loan List
-            LazyColumn {
-                items(list) { loan ->
-                    AppCard {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
+                LazyColumn {
+                    items(list) { loan ->
+                        AppCard {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
 
-                            Text("${loan.person} ₹${loan.amount}")
+                                Text("${loan.person} ₹${loan.amount}")
 
-                            Button(
-                                onClick = {
+                                Button(onClick = {
                                     val new = list.filter { it != loan }
                                     list = new
 
@@ -118,9 +126,9 @@ fun LoanScreen(navController: NavController) {
                                     scope.launch {
                                         prefs.saveLoans(str)
                                     }
+                                }) {
+                                    Text("Delete")
                                 }
-                            ) {
-                                Text("Delete")
                             }
                         }
                     }

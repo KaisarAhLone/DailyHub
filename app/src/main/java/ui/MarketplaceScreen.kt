@@ -1,5 +1,6 @@
 package com.example.dailyhub.ui
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,12 +11,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.dailyhub.data.UserPreferences
-import com.example.dailyhub.ui.components.*
+import com.example.dailyhub.components.*
 import kotlinx.coroutines.launch
 
 // ✅ Data class
 data class Item(val name: String, val price: Int)
 
+@SuppressLint("CoroutineCreationDuringComposition")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MarketplaceScreen(navController: NavController) {
@@ -35,79 +37,87 @@ fun MarketplaceScreen(navController: NavController) {
         if (saved.isNotEmpty()) {
             list = saved.split(",").mapNotNull {
                 val p = it.split(":")
-                if (p.size == 2) Item(p[0], p[1].toInt()) else null
+                if (p.size == 2 && p[1].toIntOrNull() != null) {
+                    Item(p[0], p[1].toInt())
+                } else null
             }
         }
     }
 
-    Scaffold { pad ->
-        Column(
-            modifier = Modifier
-                .padding(pad)
-                .padding(16.dp)
-        ) {
+    AppBackground {
 
-            // 🎨 Header
-            GradientHeader("Marketplace 🛒")
+        Scaffold(
+            containerColor = androidx.compose.ui.graphics.Color.Transparent
+        ) { pad ->
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Column(
+                modifier = Modifier
+                    .padding(pad)
+                    .padding(16.dp)
+            ) {
 
-            // 📦 Input Card
-            AppCard {
+                GradientHeader("Marketplace 🛒")
 
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Item Name") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                Spacer(Modifier.height(16.dp))
 
-                Spacer(modifier = Modifier.height(10.dp))
+                // 📦 Input Card
+                AppCard {
 
-                OutlinedTextField(
-                    value = price,
-                    onValueChange = { price = it },
-                    label = { Text("Price") },
-                    modifier = Modifier.fillMaxWidth()
-                )
+                    OutlinedTextField(
+                        value = name,
+                        onValueChange = { name = it },
+                        label = { Text("Item Name") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-                Spacer(modifier = Modifier.height(12.dp))
+                    Spacer(Modifier.height(10.dp))
 
-                FullButton("Add Item") {
-                    if (name.isNotEmpty() && price.isNotEmpty()) {
+                    OutlinedTextField(
+                        value = price,
+                        onValueChange = { price = it },
+                        label = { Text("Price") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
 
-                        val new = list + Item(name, price.toInt())
-                        list = new
+                    Spacer(Modifier.height(12.dp))
 
-                        val str = new.joinToString(",") {
-                            "${it.name}:${it.price}"
+                    FullButton("Add Item") {
+
+                        val pr = price.toIntOrNull()
+
+                        if (name.isNotEmpty() && pr != null) {
+
+                            val new = list + Item(name, pr)
+                            list = new
+
+                            val str = new.joinToString(",") {
+                                "${it.name}:${it.price}"
+                            }
+
+                            scope.launch {
+                                prefs.saveMarket(str)
+                            }
+
+                            name = ""
+                            price = ""
                         }
-
-                        scope.launch {
-                            prefs.saveMarket(str)
-                        }
-
-                        name = ""
-                        price = ""
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(10.dp))
+                Spacer(Modifier.height(10.dp))
 
-            // 📋 Items List
-            LazyColumn {
-                items(list) { item ->
-                    AppCard {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
+                // 📋 List
+                LazyColumn {
+                    items(list) { item ->
+                        AppCard {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
 
-                            Text("${item.name} ₹${item.price}")
+                                Text("${item.name} ₹${item.price}")
 
-                            Button(
-                                onClick = {
+                                Button(onClick = {
                                     val new = list.filter { it != item }
                                     list = new
 
@@ -118,9 +128,9 @@ fun MarketplaceScreen(navController: NavController) {
                                     scope.launch {
                                         prefs.saveMarket(str)
                                     }
+                                }) {
+                                    Text("Delete")
                                 }
-                            ) {
-                                Text("Delete")
                             }
                         }
                     }
