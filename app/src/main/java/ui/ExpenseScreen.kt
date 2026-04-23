@@ -1,18 +1,19 @@
 package com.example.dailyhub.ui
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.*
-import androidx.compose.material.icons.*
-import androidx.compose.material.icons.filled.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.*
-import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.dailyhub.data.UserPreferences
+import com.example.dailyhub.ui.components.*
 import kotlinx.coroutines.launch
 
+// ✅ Data class
 data class Expense(val title: String, val amount: Int)
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -27,8 +28,9 @@ fun ExpenseScreen(navController: NavController) {
     var amount by remember { mutableStateOf("") }
     var list by remember { mutableStateOf(listOf<Expense>()) }
 
-    val saved by prefs.expensesFlow.collectAsState("")
+    val saved by prefs.expensesFlow.collectAsState(initial = "")
 
+    // 🔄 Load saved data
     LaunchedEffect(saved) {
         if (saved.isNotEmpty()) {
             list = saved.split(",").mapNotNull {
@@ -40,56 +42,97 @@ fun ExpenseScreen(navController: NavController) {
 
     val total = list.sumOf { it.amount }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Expenses") },
-                navigationIcon = {
-                    IconButton({ navController.popBackStack() }) {
-                        Icon(Icons.Default.ArrowBack, null)
+    Scaffold { pad ->
+        Column(
+            modifier = Modifier
+                .padding(pad)
+                .padding(16.dp)
+        ) {
+
+            // 🎨 Header
+            GradientHeader("Expenses 💸")
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 📦 Input Card
+            AppCard {
+
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Title") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                OutlinedTextField(
+                    value = amount,
+                    onValueChange = { amount = it },
+                    label = { Text("Amount") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                FullButton("Add Expense") {
+                    if (title.isNotEmpty() && amount.isNotEmpty()) {
+
+                        val new = list + Expense(title, amount.toInt())
+                        list = new
+
+                        val str = new.joinToString(",") {
+                            "${it.title}:${it.amount}"
+                        }
+
+                        scope.launch {
+                            prefs.saveExpenses(str)
+                        }
+
+                        title = ""
+                        amount = ""
                     }
                 }
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // 💰 Total
+            Text(
+                text = "Total: ₹$total",
+                style = MaterialTheme.typography.headlineSmall
             )
-        }
-    ) { pad ->
 
-        Column(Modifier.padding(pad).padding(16.dp)) {
+            Spacer(modifier = Modifier.height(10.dp))
 
-            OutlinedTextField(title, { title = it }, label = { Text("Title") })
-            Spacer(Modifier.height(8.dp))
-            OutlinedTextField(amount, { amount = it }, label = { Text("Amount") })
-
-            Spacer(Modifier.height(8.dp))
-
-            Button({
-                if (title.isNotEmpty() && amount.isNotEmpty()) {
-                    val new = list + Expense(title, amount.toInt())
-                    list = new
-
-                    val str = new.joinToString(",") { "${it.title}:${it.amount}" }
-                    scope.launch { prefs.saveExpenses(str) }
-
-                    title = ""; amount = ""
-                }
-            }) { Text("Add") }
-
-            Spacer(Modifier.height(10.dp))
-            Text("Total: ₹$total")
-
+            // 📋 List
             LazyColumn {
                 items(list) { e ->
-                    Row(
-                        Modifier.fillMaxWidth().padding(8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Text("${e.title} ₹${e.amount}")
+                    AppCard {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
 
-                        Button({
-                            val new = list.filter { it != e }
-                            list = new
-                            val str = new.joinToString(",") { "${it.title}:${it.amount}" }
-                            scope.launch { prefs.saveExpenses(str) }
-                        }) { Text("Delete") }
+                            Text("${e.title} ₹${e.amount}")
+
+                            Button(
+                                onClick = {
+                                    val new = list.filter { it != e }
+                                    list = new
+
+                                    val str = new.joinToString(",") {
+                                        "${it.title}:${it.amount}"
+                                    }
+
+                                    scope.launch {
+                                        prefs.saveExpenses(str)
+                                    }
+                                }
+                            ) {
+                                Text("Delete")
+                            }
+                        }
                     }
                 }
             }

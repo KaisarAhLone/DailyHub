@@ -4,12 +4,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.dailyhub.ui.components.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,61 +33,76 @@ fun HomeScreen(navController: NavController) {
                 }
             )
         }
-    ) { innerPadding ->
+    ) { pad ->
 
         Column(
             modifier = Modifier
-                .padding(innerPadding)
+                .padding(pad)
                 .padding(16.dp)
         ) {
 
-            Text(
-                text = "Welcome 👋",
-                style = MaterialTheme.typography.headlineSmall
-            )
+            // 🎨 Header
+            GradientHeader("Welcome 👋")
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            HomeCard("Expenses", Icons.Default.Add) {
+            // 💸 Expense Card
+            DashboardCard("Expenses", "Track your spending", Icons.Default.AttachMoney) {
                 navController.navigate("expense")
             }
 
-            HomeCard("Loans", Icons.Default.AccountBalance) {
+            // 💰 Loan Card
+            DashboardCard("Loans", "Manage borrow & lend", Icons.Default.AccountBalance) {
                 navController.navigate("loan")
             }
 
-            HomeCard("Marketplace", Icons.Default.ShoppingCart) {
+            // 🛒 Market Card
+            DashboardCard("Marketplace", "Buy & sell items", Icons.Default.ShoppingCart) {
                 navController.navigate("market")
             }
         }
     }
 }
 
+// 🔥 Dashboard Card
 @Composable
-fun HomeCard(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
-
+fun DashboardCard(
+    title: String,
+    subtitle: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    onClick: () -> Unit
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(vertical = 10.dp)
             .clickable { onClick() },
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(6.dp)
+        shape = RoundedCornerShape(20.dp),
+        elevation = CardDefaults.cardElevation(8.dp)
     ) {
-
         Row(
             modifier = Modifier.padding(20.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
-            Icon(icon, contentDescription = null)
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(40.dp)
+            )
 
             Spacer(modifier = Modifier.width(16.dp))
 
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium
-            )
+            Column {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
         }
     }
 }
