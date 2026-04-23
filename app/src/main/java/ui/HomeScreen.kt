@@ -2,15 +2,12 @@ package com.example.dailyhub.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
+import androidx.compose.ui.*
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 
@@ -26,7 +23,7 @@ fun HomeScreen(navController: NavController) {
                     IconButton(onClick = {
                         navController.navigate("settings")
                     }) {
-                        Icon(Icons.Default.Settings, contentDescription = "Settings")
+                        Icon(Icons.Default.Settings, contentDescription = null)
                     }
                 }
             )
@@ -35,54 +32,57 @@ fun HomeScreen(navController: NavController) {
 
         Column(
             modifier = Modifier
-                .fillMaxSize()
                 .padding(innerPadding)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(16.dp)
         ) {
 
-            Text("Welcome to DailyHub", style = MaterialTheme.typography.headlineMedium)
+            Text(
+                text = "Welcome 👋",
+                style = MaterialTheme.typography.headlineSmall
+            )
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-                    .clickable { navController.navigate("expense") }
-            ) {
-                Row(Modifier.padding(16.dp)) {
-                    Icon(Icons.Default.Add, contentDescription = null)
-                    Spacer(Modifier.width(10.dp))
-                    Text("Add Expense")
-                }
+            HomeCard("Expenses", Icons.Default.Add) {
+                navController.navigate("expense")
             }
 
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-                    .clickable { navController.navigate("loan") }
-            ) {
-                Row(Modifier.padding(16.dp)) {
-                    Icon(Icons.Default.AccountBalance, contentDescription = null)
-                    Spacer(Modifier.width(10.dp))
-                    Text("View Loans")
-                }
+            HomeCard("Loans", Icons.Default.AccountBalance) {
+                navController.navigate("loan")
             }
 
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-                    .clickable { navController.navigate("market") }
-            ) {
-                Row(Modifier.padding(16.dp)) {
-                    Icon(Icons.Default.ShoppingCart, contentDescription = null)
-                    Spacer(Modifier.width(10.dp))
-                    Text("Marketplace")
-                }
+            HomeCard("Marketplace", Icons.Default.ShoppingCart) {
+                navController.navigate("market")
             }
+        }
+    }
+}
+
+@Composable
+fun HomeCard(title: String, icon: androidx.compose.ui.graphics.vector.ImageVector, onClick: () -> Unit) {
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp)
+            .clickable { onClick() },
+        shape = RoundedCornerShape(16.dp),
+        elevation = CardDefaults.cardElevation(6.dp)
+    ) {
+
+        Row(
+            modifier = Modifier.padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+
+            Icon(icon, contentDescription = null)
+
+            Spacer(modifier = Modifier.width(16.dp))
+
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium
+            )
         }
     }
 }

@@ -20,7 +20,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import coil.compose.rememberAsyncImagePainter
-import com.example.dailyhub.UserData   // ✅ IMPORTANT
+import com.example.dailyhub.UserData
+import com.example.dailyhub.data.UserPreferences
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -30,7 +32,11 @@ fun SignupScreen(navController: NavController) {
     var profession by remember { mutableStateOf("") }
     var imageUri by remember { mutableStateOf<Uri?>(null) }
 
-    // 🔥 Image picker
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val userPreferences = UserPreferences(context)
+
+    // Image picker
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri: Uri? ->
@@ -53,7 +59,7 @@ fun SignupScreen(navController: NavController) {
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            // 👤 Profile Image (default avatar)
+            // Profile Image
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
@@ -61,7 +67,6 @@ fun SignupScreen(navController: NavController) {
                     .clip(CircleShape)
                     .background(Color.LightGray)
             ) {
-
                 if (imageUri != null) {
                     Image(
                         painter = rememberAsyncImagePainter(imageUri),
@@ -111,12 +116,20 @@ fun SignupScreen(navController: NavController) {
                 onClick = {
                     if (name.isNotEmpty() && profession.isNotEmpty()) {
 
-                        // 🔥 Save data
+                        // 🔥 Save in memory (for UI)
                         UserData.name = name
                         UserData.profession = profession
                         UserData.imageUri = imageUri?.toString()
 
-                        navController.navigate("home")
+                        // 🔥 Save login permanently
+                        scope.launch {
+                            userPreferences.saveUser(name, profession, null)
+                        }
+
+                        navController.navigate("home") {
+                            popUpTo("signup") { inclusive = true }
+                            launchSingleTop = true
+                        }
                     }
                 },
                 modifier = Modifier.fillMaxWidth()
